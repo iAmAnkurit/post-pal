@@ -14,6 +14,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+const isLoggedIn = (req, res, next) => {
+  if (req.cookies && Object.keys(req.cookies).length > 0) {
+    let data = jwt.verify(req.cookies.token, "SecrectKey");
+    req.user = data;
+    next();
+  } else {
+    res.send("You need to login first");
+  }
+};
+
 app.get("/", (req, res) => {
   res.render("index");
 });
@@ -45,6 +55,11 @@ app.post("/register", async (req, res) => {
 });
 
 app.get("/login", (req, res) => {
+  res.render("login");
+});
+
+app.get("/profile", isLoggedIn, (req, res) => {
+  console.log(req.user);
   res.render("login");
 });
 
