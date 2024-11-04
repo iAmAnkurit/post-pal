@@ -8,6 +8,7 @@ const postModel = require("./models/post");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const user = require("./models/user");
 
 app.set("view engine", "ejs");
 app.use(express.json());
@@ -20,7 +21,7 @@ const isLoggedIn = (req, res, next) => {
     req.user = data;
     next();
   } else {
-    res.send("You need to login first");
+    res.redirect("/login");
   }
 };
 
@@ -58,9 +59,11 @@ app.get("/login", (req, res) => {
   res.render("login");
 });
 
-app.get("/profile", isLoggedIn, (req, res) => {
-  console.log(req.user);
-  res.render("login");
+app.get("/profile", isLoggedIn, async (req, res) => {
+  const user = await userModel
+    .findOne({ email: req.user.email })
+    .populate("posts");
+  res.render("profile", { user });
 });
 
 app.post("/login", async (req, res) => {
@@ -76,7 +79,7 @@ app.post("/login", async (req, res) => {
     if (result) {
       let token = jwt.sign({ email: email, userId: user._id }, "SecrectKey");
       res.cookie("token", token);
-      res.status(200).send(`Hi, ${user.username}`);
+      res.status(200).redirect("/profile");
     } else {
       res.status(422).send("Email or password is incorrect.");
     }
@@ -86,6 +89,20 @@ app.post("/login", async (req, res) => {
 app.get("/logout", (req, res) => {
   res.clearCookie("token");
   res.redirect("/login");
+});
+
+app.post("/post", isLoggedIn, async (req, res) => {
+  let user = await userModel.findOne({ email: req.user.email });
+
+  let post = await postModel.create({
+    user: user._id,
+    content: req.body.post,
+  });
+
+  user.posts.push(post._id);
+  await user.save();
+
+  res.redirect("/profile");
 });
 
 app.listen(3000);
