@@ -60,10 +60,25 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/profile", isLoggedIn, async (req, res) => {
+  const post = await postModel.find();
+
   const user = await userModel
     .findOne({ email: req.user.email })
     .populate("posts");
-  res.render("profile", { user });
+  res.render("profile", { user, post });
+});
+
+app.get("/like/:id", isLoggedIn, async (req, res) => {
+  const post = await postModel.findOne({ _id: req.params.id }).populate("user");
+
+  if (post.likes.indexOf(req.user.userId) === -1) {
+    post.likes.push(req.user.userId);
+  } else {
+    post.likes.splice(post.likes.indexOf(req.user.userId), 1);
+  }
+  await post.save();
+
+  res.redirect("/profile");
 });
 
 app.post("/login", async (req, res) => {
@@ -102,6 +117,29 @@ app.post("/post", isLoggedIn, async (req, res) => {
   user.posts.push(post._id);
   await user.save();
 
+  res.redirect("/profile");
+});
+
+app.get("/edit/:id", isLoggedIn, async (req, res) => {
+  const postId = req.params.id;
+
+  const user = await userModel.findOne({ email: req.user.email });
+  const post = await postModel.findOne({
+    _id: postId,
+  });
+
+  if (user.posts.includes(postId)) {
+    res.render("edit", { user, post });
+  } else {
+    console.log("You cannot edit");
+  }
+});
+
+app.post("/update/:id", async (req, res) => {
+  const post = await postModel.findOne({ _id: req.params.id });
+
+  post.content = req.body.post;
+  await post.save();
   res.redirect("/profile");
 });
 
