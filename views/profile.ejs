@@ -15,10 +15,15 @@
         >
       </div>
       <div class="w-full">
-        <h3 class="text-3xl">
-          <span class="font-light">Hello</span>! <%= user.name %>
-        </h3>
-        <h5 class="mb-5">You can create a new post.</h5>
+        <div class="flex item-start gap-3">
+          <div class="w-10 h-10 rounded-md oberflow-hidden">
+            <img class="w-full h-full object-cover" src="/images/uploads/<%=user.profilepic %>" alt="">
+          </div>
+          <h3 class="text-3xl">
+            <span class="font-light">Hello</span>! <%= user.name %>
+          </h3>
+        </div>
+        <h5 class="mb-5 mt-3">You can create a new post.</h5>
         <form action="/post" method="Post">
           <textarea
             placeholder="What's on your mind?"
